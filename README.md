@@ -21,7 +21,7 @@ Load jQuery before the plugin, then call `$.dynTitles`:
 
 Load the plugin after the page's `<title>` element, because it captures the original title when it registers. Load it once per page.
 
-The package is being prepared for npm. Once published, install it with:
+The package is published on npm: [jq-dynamic-titles](https://www.npmjs.com/package/jq-dynamic-titles). Install it with:
 
 ```sh
 npm install jq-dynamic-titles jquery
