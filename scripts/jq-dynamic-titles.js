@@ -102,7 +102,7 @@
             callback.call(this); // brings the scope to the callback
         }
 
-        return this; // Returns jQuery to allow for chainability
+        return this; // Returns jQuery to allow for chainability.
     };
 
     $.dynTitles.defaults = {
