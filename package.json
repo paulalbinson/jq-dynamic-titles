@@ -2,6 +2,14 @@
   "name": "jq-dynamic-titles",
   "version": "1.0.0",
   "description": "A jQuery utility for blinking, scrolling and restoring the document title",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulalbinson/jq-dynamic-titles.git"
+  },
+  "homepage": "https://paulalbinson.com/code-and-demos/jquery/jq-dynamic-titles",
+  "bugs": {
+    "url": "https://github.com/paulalbinson/jq-dynamic-titles/issues"
+  },
   "main": "scripts/jq-dynamic-titles.js",
   "files": ["scripts/jq-dynamic-titles.js"],
   "keywords": ["jquery", "jquery-plugin", "document-title", "notification"],
