@@ -22,11 +22,11 @@
         factory(jQuery, window);
     }
 })(function ($, window) {
-    var document = window.document;
-    var hasFocus = document.hasFocus();
-    var stopOnFocus = false;
-    var dynTitlesInterval = null;
-    var origDocuTitle = document.title;
+    let document = window.document;
+    let hasFocus = document.hasFocus();
+    let stopOnFocus = false;
+    let dynTitlesInterval = null;
+    let origDocuTitle = document.title;
 
     $.dynTitles = function (options, callback) {
         if (typeof options === "function") {
@@ -34,34 +34,50 @@
             options = null;
         }
 
-        var settings = $.extend({}, $.dynTitles.defaults, options);
+        let settings = $.extend({}, $.dynTitles.defaults, options);
 
-        var namedSpeed = settings.speed === 'fast' ||
+        let namedSpeed = settings.speed === 'fast' ||
             settings.speed === 'medium' ||
             settings.speed === 'slow';
 
-        if (!namedSpeed && (
+        if (settings.type !== 'restore' && !namedSpeed && (
             typeof settings.speed !== 'number' ||
             !Number.isFinite(settings.speed) ||
             settings.speed <= 0 ||
             settings.speed > 2147483647
         )) {
             throw new TypeError(
-                'speed must be fast, medium, slow, or a positive number of milliseconds'
+                'Speed must be fast, medium, slow, or a positive number of milliseconds.'
             );
         }
 
         if (['blink', 'scroll', 'const', 'restore'].indexOf(settings.type) === -1) {
             throw new TypeError(
-                'type must be blink, scroll, const, or restore'
+                'Type must be blink, scroll, const, or restore.'
             );
+        }
+
+        if (settings.type !== 'restore' && typeof settings.message !== 'string') {
+            throw new TypeError('Message must be a string.');
+        }
+
+        if (settings.type === 'scroll' && settings.direction !== 'fwd' && settings.direction !== 'bwd') {
+            throw new TypeError('Direction must be fwd or bwd.');
+        }
+
+        if (settings.type === 'scroll' && typeof settings.reverse !== 'boolean') {
+            throw new TypeError('Reverse must be a boolean.');
+        }
+
+        if (settings.type !== 'restore' && typeof settings.onlyOnNonFocus !== 'boolean') {
+            throw new TypeError('onlyOnNonFocus must be a boolean.');
         }
 
         stopOnFocus = settings.onlyOnNonFocus && settings.type !== 'restore';
 
-        window.clearTimeout(dynTitlesInterval); // Stop any other usages of dynTitles that maybe running
+        window.clearTimeout(dynTitlesInterval); // Stop any other usages of dynTitles that may be running
 
-        var speedNumeric = false; // Setup a variable to record if the speed is numeric or not
+        let speedNumeric = false;
         switch (settings.speed) {
             case "fast":
                 settings.speed = 200;
@@ -92,9 +108,10 @@
                 scrollTitle(settings.message, settings.position, settings.speed, settings.direction, settings.reverse, settings.onlyOnNonFocus);
                 break;
             case "blink":
+                // Fast/medium/slow needs to be slower than for scroll otherwise it looks too slow
                 if (speedNumeric === false) {
                     settings.speed = (settings.speed * 5);
-                } // Fast/medium/slow needs to be slower than for scroll otherwise it looks too slow
+                }
                 blinkTitle(settings.message, settings.position, settings.speed, false, settings.onlyOnNonFocus);
                 break;
         }
@@ -130,7 +147,7 @@
     });
 
     function blinkTitle(message, position, speed, showDefault, onlyOnNonFocus) {
-        var docuTitle;
+        let docuTitle;
         if (((onlyOnNonFocus === true) && (hasFocus === false)) || (onlyOnNonFocus === false)) {
             if ((showDefault === true) || (showDefault === undefined)) {
                 docuTitle = origDocuTitle;
@@ -153,9 +170,26 @@
 
     function scrollTitle(message, position, speed, direction, reverse, onlyOnNonFocus) {
         // Scrolling title script inspired by HIOX INDIA / hscripts.com
-        var msgLen = message.length;
-        var docuTitle;
-        var speedToUse = speed;
+        let characters;
+
+        if (window.Intl && window.Intl.Segmenter) {
+            const segmenter = new window.Intl.Segmenter(undefined, {
+                granularity: 'grapheme'
+            });
+
+            characters = Array.from(
+                segmenter.segment(message),
+                function (part) {
+                    return part.segment;
+                }
+            );
+        } else {
+            characters = Array.from(message);
+        }
+
+        let msgLen = characters.length;
+        let docuTitle;
+        let speedToUse = speed;
         if (position === undefined || position === null) {
             if (direction === "bwd") {
                 position = msgLen + 1;
@@ -169,10 +203,10 @@
 
         // If page is not in focus or we chose to always run the scroller
         if (((onlyOnNonFocus === true) && (hasFocus === false)) || (onlyOnNonFocus === false)) {
-            if (direction === "fwd") { // if direction is forward or hasn't been set
+            if (direction === "fwd") { // If direction is forward or hasn't been set
                 if (position < msgLen) {
                     position = position + 1;
-                    docuTitle = message.slice(0, position);
+                    docuTitle = characters.slice(0, position).join('');
                 } else if (reverse === true) {
                     speedToUse = 2000;
                     direction = "bwd";
@@ -187,11 +221,13 @@
                 if (position === msgLen + 1) {
                     speedToUse = 2000;
                 }
+
                 position = position - 1;
-                var startPos = (msgLen - position); // Set the start position of the substring to output
+
+                let startPos = (msgLen - position); // Set the start position of the substring to output
                 // If the position is 0 or greater and the start position is less than the message length (i.e. we can select something)
                 if ((position >= 0) && (startPos < msgLen)) {
-                    docuTitle = message.slice(startPos);  // Select the new substring to use as the page title
+                    docuTitle = characters.slice(startPos).join('');  // Select the new substring to use as the page title
                 } else {
                     // If not, i.e scrolled back to the beginning then display the default title
                     docuTitle = origDocuTitle;
@@ -203,7 +239,8 @@
                     }
                 }
             }
-            // replace/update the timeout
+
+            // Replace/update the timeout
             dynTitlesInterval = window.setTimeout(function () {
                 scrollTitle(message, position, speed, direction, reverse, onlyOnNonFocus);
             }, speedToUse);

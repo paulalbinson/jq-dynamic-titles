@@ -79,7 +79,7 @@ $.dynTitles({
 $.dynTitles({ type: 'restore' });
 ```
 
-Each call cancels the previous animation timer. The original title remains the value captured when the plugin registered; it is not captured again on each call. Changes made to `document.title` by other scripts do not update that saved value.
+Each valid call cancels the previous animation timer. The original title remains the value captured when the plugin registered; it is not captured again on each call. Changes made to `document.title` by other scripts do not update that saved value.
 
 ## Options
 
@@ -102,31 +102,44 @@ Named speeds have different timings for scrolling and blinking:
 | `'medium'` | 400 ms | 2000 ms |
 | `'slow'` | 1000 ms | 5000 ms |
 
-Numeric speeds are used unchanged for either effect. Speed has no visual effect on `const` or `restore`, but is still validated for every call. Invalid `speed` or `type` values throw `TypeError` before cancelling the existing animation. Other options are not currently validated; supply a string message and boolean values for `reverse` and `onlyOnNonFocus`.
+Numeric speeds are used unchanged for either effect. Speed has no visual effect on `const`, but is still validated for that action. Restore ignores speed, including an invalid default speed.
+
+Invalid options throw `TypeError` before changing state or cancelling an existing animation:
+
+- `type` must be one of the four actions listed above.
+- For blink, scroll, and constant titles, `message` must be a string (an empty string is allowed), `speed` must meet the requirements above, and `onlyOnNonFocus` must be a boolean.
+- For scrolling, `direction` must be `'fwd'` or `'bwd'`, and `reverse` must be a boolean. Other actions ignore those two options.
+- Restore ignores all effect-specific options.
+
+Use actual booleans (`true` and `false`), rather than strings such as `'false'` or numbers such as `0` and `1`.
 
 The implementation also accepts an optional `position` value for scrolling, but normal usage should omit it to use the starting position for the chosen direction.
 
 ## Focus behaviour
 
-With `onlyOnNonFocus: true`, call the utility after the window has lost focus, such as from an asynchronous notification or a delayed callback. Calling while focused restores the saved title without starting an effect. It does not queue an effect to start on the next blur.
+Call `$.dynTitles` whenever an event warrants a title update, whether that is a user action, an AJAX response, or another notification. `onlyOnNonFocus` determines whether that update is displayed based on the window's focus at the time of the call.
+
+With the default `onlyOnNonFocus: true`, an unfocused window displays the effect to draw the user's attention back to the page. If the window is focused, the user is already on the page, so the saved title is shown instead. That call does not schedule an effect for a later loss of focus.
 
 When focus returns, the original title is restored immediately and the effect stops, including a constant title. A later blur does not restart it; call `$.dynTitles` again for another notification. With `onlyOnNonFocus: false`, focus changes do not interrupt the effect.
 
 Focus is tracked using `document.hasFocus()` initially and window `focus`/`blur` events thereafter. The plugin does not listen for document visibility changes. Its namespaced event handlers remain attached for the lifetime of the page.
 
-## Defaults and callback
+## Per-call options
 
-Change public defaults before making a call:
+Pass only the options you want to customise. Omitted options use the defaults in the table above. Each call creates its own settings by combining those defaults with the supplied options; it does not change the defaults or carry options over from the previous call.
+
+## Callback
+
+An optional second argument lets you run code after the call has processed the requested action:
 
 ```js
-$.dynTitles.defaults.speed = 'slow';
-
 $.dynTitles({ message: 'Ready', onlyOnNonFocus: false }, function () {
     console.log('Title effect configured');
 });
 ```
 
-Each call copies the defaults before applying its options. The optional callback runs once, synchronously after the call has processed the requested effect, even if focus prevented the effect from starting. It is not an animation completion callback. A callback can also be the only argument; that call uses the defaults.
+The callback runs once, synchronously before `$.dynTitles` returns, even if focus prevented the effect from starting. It does not wait for animation ticks and is not an animation completion callback. It is not called if option validation throws an error. A callback can also be the only argument; that call uses the default options.
 
 When invoked as `$.dynTitles(...)`, the callback's `this` value and the utility's return value are jQuery. This is a utility on `$`, not a method on jQuery element collections.
 
@@ -134,7 +147,15 @@ When invoked as `$.dynTitles(...)`, the callback's `this` value and the utility'
 
 The package declares jQuery `^3.7.1 || ^4.0.0` as a peer dependency. The current version has no automated test suite; verify the demos with the jQuery versions and browsers you intend to support.
 
-The plugin uses `Number.isFinite`, so older browsers need a suitable polyfill. Background tabs may throttle timers, making animation delays approximate. Scrolling uses JavaScript string indexes (UTF-16 code units), so it can split emoji, surrogate pairs, and combined characters.
+The plugin uses `Number.isFinite` and `Array.from`, so older browsers need suitable polyfills. Background tabs may throttle timers, making animation delays approximate.
+
+### Unicode scrolling
+
+When `Intl.Segmenter` is available, scrolling advances by grapheme clusters (whole visible characters). This keeps joined emoji, flags, and letters with combining marks together in both scroll directions.
+
+Without `Intl.Segmenter`, scrolling falls back to `Array.from(message)`, which advances by Unicode code points. This preserves surrogate pairs, including individual supplementary-plane emoji, but can split joined emoji, flags, and combining-character sequences across animation steps. To preserve those sequences in browsers without native support, provide an `Intl.Segmenter` polyfill before using the plugin.
+
+The optional `position` value counts grapheme clusters when segmentation is available, or code points in fallback mode. Blink and constant effects display the message intact in either mode.
 
 ## Documentation and demos
 
