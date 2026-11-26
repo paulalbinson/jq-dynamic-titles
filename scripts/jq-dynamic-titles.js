@@ -36,6 +36,20 @@
 
         let settings = $.extend({}, $.dynTitles.defaults, options);
 
+        // Normalise recognised string options without changing the message.
+        ['type', 'speed', 'direction'].forEach(function (key) {
+            if (typeof settings[key] === 'string') {
+                settings[key] = settings[key].toLowerCase();
+            }
+        });
+
+        // Accept full direction names alongside the existing shorthand.
+        if (settings.direction === 'forward') {
+            settings.direction = 'fwd';
+        } else if (settings.direction === 'backward') {
+            settings.direction = 'bwd';
+        }
+
         let namedSpeed = settings.speed === 'fast' ||
             settings.speed === 'medium' ||
             settings.speed === 'slow';
@@ -62,7 +76,7 @@
         }
 
         if (settings.type === 'scroll' && settings.direction !== 'fwd' && settings.direction !== 'bwd') {
-            throw new TypeError('Direction must be fwd or bwd.');
+            throw new TypeError('Direction must be forward or backward, or the shorthand fwd or bwd.');
         }
 
         if (settings.type === 'scroll' && typeof settings.reverse !== 'boolean') {

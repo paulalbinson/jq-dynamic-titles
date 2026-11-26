@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Accept case-insensitive values for effect type, named speed, and scrolling direction. Message capitalisation and option names remain unchanged.
+- Accept `forward` and `backward` as aliases for `fwd` and `bwd`, including mixed-case variants.
+- Preserve supplied options and defaults by normalising only the per-call settings. Existing validation still rejects invalid values.
+- Update the README introduction and document case-insensitive values and direction aliases.
+
 ## 1.0.1
 
 - Validate message and focus options, plus scrolling direction and reverse options, before changing a running effect. Invalid values throw `TypeError`.

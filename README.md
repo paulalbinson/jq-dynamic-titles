@@ -1,6 +1,9 @@
 # jQuery Dynamic Titles
+## Dynamically change your browser tab's title using `$.dynTitles`
+jQuery Dynamic Titles changes the page title to blink, scroll, or display a constant message. A fourth action stops the effect and restores the original title.
 
-Blink, scroll, or replace a browser tab's title using `$.dynTitles`.
+Use it to draw attention to an update, such as a new message or a completed task. By default, effects are displayed only when the window is unfocused and stop when the user returns. Set `onlyOnNonFocus: false` to display an effect regardless of focus.
+
 This utility changes `document.title` for the page, so no element selection is needed.
 
 ## Installation
@@ -88,7 +91,7 @@ Each valid call cancels the previous animation timer. The original title remains
 | `type` | `'blink'` | `'blink'`, `'scroll'`, `'const'`, or `'restore'` |
 | `message` | `'New Message'` | String to display; unused for restore |
 | `speed` | `'medium'` | `'fast'`, `'medium'`, `'slow'`, or a positive finite number of milliseconds, up to 2147483647 |
-| `direction` | `'fwd'` | Starting scroll direction: `'fwd'` or `'bwd'` |
+| `direction` | `'fwd'` | Starting scroll direction: `'fwd'` / `'forward'` or `'bwd'` / `'backward'` |
 | `reverse` | `true` | Alternate scroll directions; use `false` to repeat the starting direction |
 | `onlyOnNonFocus` | `true` | Apply the effect only when the window does not have focus; restore and stop when focus returns |
 
@@ -108,10 +111,22 @@ Invalid options throw `TypeError` before changing state or cancelling an existin
 
 - `type` must be one of the four actions listed above.
 - For blink, scroll, and constant titles, `message` must be a string (an empty string is allowed), `speed` must meet the requirements above, and `onlyOnNonFocus` must be a boolean.
-- For scrolling, `direction` must be `'fwd'` or `'bwd'`, and `reverse` must be a boolean. Other actions ignore those two options.
+- For scrolling, `direction` must be `'fwd'`, `'forward'`, `'bwd'`, or `'backward'`, and `reverse` must be a boolean. Other actions ignore those two options.
 - Restore ignores all effect-specific options.
 
-Use actual booleans (`true` and `false`), rather than strings such as `'false'` or numbers such as `0` and `1`.
+The string values of `type`, named `speed`, and `direction` are case-insensitive. For example, `'SCROLL'`, `'Fast'`, and `'Forward'` are accepted. Full direction names are aliases: `'forward'` means `'fwd'`, and `'backward'` means `'bwd'`. Message text retains its original capitalisation. Option names remain case-sensitive, including `onlyOnNonFocus`.
+
+```js
+$.dynTitles({
+    type: 'SCROLL',
+    speed: 'Fast',
+    direction: 'Forward',
+    message: 'Keep My Capitalisation',
+    onlyOnNonFocus: false
+});
+```
+
+Use actual booleans (`true` and `false`), rather than strings such as `'false'` or numbers such as `0` and `1`. Numeric speeds must be numbers, not numeric strings. Normalisation affects only the per-call settings; supplied options and public defaults are not modified.
 
 The implementation also accepts an optional `position` value for scrolling, but normal usage should omit it to use the starting position for the chosen direction.
 
